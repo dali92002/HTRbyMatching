@@ -65,7 +65,7 @@ Coming soon ...
 Download the desired pretrained weigts from the section Models. Then run the following command. Here we are choosing to recognize the lines of the cipher "borg", in a 1 shot scenario, with the model finetuned on the borg (as will be stated in the testing model path). We specify the input data path: lines and alphabet. As well ass the desired output path, here we want in in a floder named output in this same directory and the threshold 0.4. 
 
 ```bash
-python test.py --cipher borg --testing_model models/borg.pth  --lines ./lines --alphabet ./alphabet  --output ./output_result --shots 1 --thresh 0.4
+python test.py --cipher borg --testing_model /MODEL_WEIGHTS_PATH/  --lines ./lines --alphabet ./alphabet  --output ./output_result --shots 1 --thresh 0.4
 ```
 
 Please, check the folders named lines and alphabet to realize how you should provide your input data. After running you will receive the results in a 3 subfolders of your output folder.  
