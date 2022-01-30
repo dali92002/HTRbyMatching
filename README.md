@@ -35,22 +35,22 @@ Download the desired weights. These are following the training that was done in 
   <tr>
     <td class="tg-c3ow" >Omniglot</td>
     <td class="tg-c3ow">  -- </td>
-    <td class="tg-c3ow"><a href="https://drive.google.com/file/d/113X6gzFHTIkHZ3XYbyTcCWpQ?usp=sharing" target="_blank" rel="noopener noreferrer">model</a></td>
+    <td class="tg-c3ow"><a href="https://drive.google.com/file/d/1MmW-6n8M_u-bMZdMWGLidqfo1uhXlDQQ/view?usp=sharing" target="_blank" rel="noopener noreferrer">model</a></td>
   </tr>
   <tr>
     <td class="tg-c3ow" >Omniglot</td>
     <td class="tg-c3ow">  Borg </td>
-    <td class="tg-c3ow"><a href="https://drive.google.com/file/d/113X6gzFHTIkHZ3XYbyTcCWQzAs/view?usp=sharing" target="_blank" rel="noopener noreferrer">model</a></td>
+    <td class="tg-c3ow"><a href="https://drive.google.com/file/d/15CvT46BDYkI8DdOkm44eiN6f9ecMM5Wh/view?usp=sharing" target="_blank" rel="noopener noreferrer">model</a></td>
   </tr>
     <tr>
     <td class="tg-c3ow" >Omniglot</td>
     <td class="tg-c3ow">  Copiale </td>
-    <td class="tg-c3ow"><a href="https://drive.google.com/file/d/113X6gzFHTIkHZ3XYbyTcCWpQGV8Qiew?usp=sharing" target="_blank" rel="noopener noreferrer">model</a></td>
+    <td class="tg-c3ow"><a href="https://drive.google.com/file/d/1U8-BobTzFIRHMahMKqRiqJFHNc96gUDb/view?usp=sharing" target="_blank" rel="noopener noreferrer">model</a></td>
   </tr>
     <tr>
     <td class="tg-c3ow" >Omniglot</td>
     <td class="tg-c3ow">  Vatican </td>
-    <td class="tg-c3ow"><a href="https://drive.google.com/file/d/113X6gzFHTIkHZ3XYQQzAs/view?usp=sharing" target="_blank" rel="noopener noreferrer">model</a></td>
+    <td class="tg-c3ow"><a href="https://drive.google.com/file/d/1qReohSO2pHE2kypMCbq850-dAZTDCv25/view?usp=sharing" target="_blank" rel="noopener noreferrer">model</a></td>
   </tr>
   
 </tbody>
@@ -78,8 +78,20 @@ This part is related to the paper [Few Shots Are All You Need: A Progressive Few
 If you find this useful for your research, please cite it as follows:
 
 ```bash
-python test.py --cipher borg --lines ./lines --alphabet ./alphabet  --output ./output --shots 1 --thresh 0.4
+@inproceedings{souibgui2021few,
+  title={A few-shot learning approach for historical ciphered manuscript recognition},
+  author={Souibgui, Mohamed Ali and Forn{\'e}s, Alicia and Kessentini, Yousri and Tudor, Crina},
+  booktitle={2020 25th International Conference on Pattern Recognition (ICPR)},
+  pages={5413--5420},
+  year={2021},
+  organization={IEEE}
+}
 ```
 ```bash
-python test.py --cipher borg --lines ./lines --alphabet ./alphabet  --output ./output --shots 1 --thresh 0.4
+@article{souibgui2021few,
+  title={Few Shots Are All You Need: A Progressive Few Shot Learning Approach for Low Resource Handwriting Recognition},
+  author={Souibgui, Mohamed Ali and Forn{\'e}s, Alicia and Kessentini, Yousri and Megyesi, Be{\'a}ta},
+  journal={arXiv preprint arXiv:2107.10064},
+  year={2021}
+}
 ```
