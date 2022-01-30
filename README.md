@@ -91,7 +91,7 @@ If you find this useful for your research, please cite it as follows:
 }
 ```
 ```bash
-@article{souibgui2021few,
+@article{souibgui2021fewShots,
   title={Few Shots Are All You Need: A Progressive Few Shot Learning Approach for Low Resource Handwriting Recognition},
   author={Souibgui, Mohamed Ali and Forn{\'e}s, Alicia and Kessentini, Yousri and Megyesi, Be{\'a}ta},
   journal={arXiv preprint arXiv:2107.10064},
