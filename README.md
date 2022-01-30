@@ -12,7 +12,7 @@ A pytorch implementation of the paper [A Few-shot Learning Approach for Historic
 clone the repository:
 ```bash
 git clone https://github.com/dali92002/HTRbyMatching
-cd DocEnTr
+cd HTRbyMatching
 ```
 ## Requirements
 
