@@ -16,8 +16,11 @@ cd HTRbyMatching
 ```
 ## Requirements
 
-Create your evironment, with the file htrmatching.yml
-
+Create your evironment, with the file htrmatching.yml, then activate it. 
+```bash
+conda env create -f htrmatching.yml
+conda activate fewdet
+```
 ## Models
 
 Download the desired weights. These are following the training that was done in [A Few-shot Learning Approach for Historical Ciphered Manuscript Recognition](https://arxiv.org/abs/2009.12577).
