@@ -144,7 +144,7 @@ class FasterRCNN(GeneralizedRCNN):
 
     def __init__(self, backbone, num_classes=None,
                  # transform parameters # 800  and 1333
-                 min_size=128, max_size=4096,
+                 min_size=128, max_size=1536,
                  image_mean=None, image_std=None,
                  # RPN parameters
                  rpn_anchor_generator=None, rpn_head=None,

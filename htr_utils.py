@@ -11,8 +11,37 @@ import random
 options = getOptions().parse()
 
 alphabet_path = options.alphabet
-threshold = float(options.thresh)
+
+
+threshold = options.thresh
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+def asciitochar(a):
+    string = ''
+    for ch in a:
+        string = string+chr(50+ch)
+    return(string)
+
+def get_error_rate(gt,pred):
+    qo = 0
+    acc = 0
+    word_acc=0
+    all_symb = 0
+    missing_symbs = 0
+    for gt_line,pred_line in zip(gt,pred):
+        gt_text = asciitochar(gt_line)
+        pred_text = asciitochar(pred_line)
+        qo = qo+1
+        cer = (editdistance.eval(gt_text, pred_text)-pred_line.count(-2))/len(gt_text)
+        all_symb = all_symb+len(gt_text)
+        missing_symbs = missing_symbs + pred_line.count(-2)
+        acc = acc + cer
+        if cer ==0:
+            word_acc = word_acc+1
+    if qo>0:
+        return (acc/qo),word_acc
+    else:
+        return 1,word_acc
 
 
 def drawprobs(model, cipher, img1,shots,st_ch,en_ch):
@@ -271,3 +300,4 @@ def inttosymbs(preds,cipher):
                     p_line += alphabet_symbs[pr[i]] + ' '
         pred_lines.append(p_line[:-1])
     return pred_lines
+
