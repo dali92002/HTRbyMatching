@@ -49,13 +49,14 @@ BATCH_SIZE = options.batch_size
 SHOTS = options.shots
 TRAIN_TYPE = options.train_type
 root =  options.data_path
+val_data_path = options.val_data_path
 root_txt = options.data_path+'annotation/train.txt'
 
 
 shots_path = cipher+'_symbs'
 
-val_lines_path = 'validation_data/'
-
+val_lines_path = val_data_path+'/lines/'
+val_text_path  = val_data_path+'/gt/'
 
 
  
@@ -88,22 +89,15 @@ model.roi_heads.box_predictor = FastRCNNPredictor(in_channels, num_classes)
 model.roi_heads.box_head = TwoMLPHead(in_channels2, in_channels)
 
 
-def get_transform(train):
-    transforms = []
-    transforms.append(T.ToTensor())
-    if train:
-        transforms.append(T.RandomHorizontalFlip(0.5))
-    return T.Compose(transforms)
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 model.to(device)
 
-# construct an optimizer
 params = [p for p in model.parameters() if p.requires_grad]
 optimizer = torch.optim.SGD(params, lr=0.005,
                             momentum=0.9, weight_decay=0.0005)
-# and a learning rate scheduler
+
 lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
                                                step_size=3,
                                                gamma=0.1)
@@ -114,47 +108,34 @@ lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
 def get_gt():
     gt = []
     for x in list_lines[:]:
-        line_gt = []
-        f = open('eval_'+cipher+'/gt/'+x.split('.jpg')[0]+'.txt', "r")
+        f = open(val_text_path+cipher+'/'+x.split('.jpg')[0]+'.txt', "r")
         line = (f.read())
         f.close()
 
         gt.append(txt_to_int(line))
     return gt
 
+
 def txt_to_int(text):
     res = []
-    
-    
-    
     alpha_f = os.listdir(alphabet_path+'/'+cipher)
-    # alpha_f.append(' ')   ################# borg ###########""
-    # alpha_f = os.listdir('few5/old_arab_symbs5')
     text= text.split('\n')[0]
-    # text = text.split(' ') ########################### copiale
-    
-    
-    
-    
-    
-    # print('text2 = ',text)
+    text = text.split(' ')
     for c in text:
-        if c in ['?','[','b',']','a','k','O','I','A','\n','3','T','R','X']: #### borg
-        # if c in ['\n',' ']:  #### runic
-        # if c  in ['?','[','b',']','a','k','O','I','A','\n','3','T','R','X']:# ['\n','x','q','y','V','P','L',"#",'R','H','Z','N','B','K','(',')','F','M','G','T','C','D']: ### copiale
-            continue
-            
+        if c not in alpha_f: #### borg
+            res.append(-3)   #### if you want to ignore out of vocab symbols make it continue
         else:
-            if c==':':
-                c='cl'
-            if c=='.':
-                c='dt'
-            if c==',':
-                c='cm'
-            if c == ' ':
-                res.append(-1)
-            else:
-                res.append(alpha_f.index(c))
+            # a=41
+            # if c==':':
+            #     c='cl'
+            # if c=='.':
+            #     c='dt'
+            # if c==',':
+            #     c='cm'
+            # # if c == ' ':   
+            # #     res.append(-1)
+            # else:
+            res.append(alpha_f.index(c))
     return (res)
 
 
@@ -162,22 +143,22 @@ def txt_to_int(text):
 
 
 if TRAIN_TYPE == 'fine_tune':
-    model.load_state_dict(torch.load('models/omniglot.pth'))
+    model.load_state_dict(torch.load('weights/omniglot.pth'))
 
     print("model loaded")
 
 best_cer = 1
-
-
 dataset,data_loader = load_data(BATCH_SIZE,SHOTS,root, root_txt)
 
 
 print_fr = int(len(dataset)/BATCH_SIZE/4)
+
+### training here
 for epoch in range(0, 100):
 
     if epoch >-1:
         
-        list_lines = os.listdir(val_lines_path+cipher)[:10]
+        list_lines = os.listdir(val_lines_path+cipher)[:2]
 
         results = draw_and_read(model,list_lines,val_lines_path,cipher,SHOTS)
         gt = get_gt()
@@ -186,13 +167,15 @@ for epoch in range(0, 100):
 
         cer = get_error_rate(gt,predictions)[0]
 
-        print('\n CER: ',cer)
+        print('Validation CER: ',cer)
 
         if cer<best_cer:
             best_cer = cer
-            torch.save(model.state_dict(), 'models/best_model_'+cipher+'_.pth')
+            if not os.path.exists('weights'):
+                os.makedirs('weights')
+            torch.save(model.state_dict(), 'weights/best_model_'+cipher+'_.pth')
 
-        print('\n best CER:', best_cer,'\n')
+        print('best Validation CER:', best_cer,'\n')
 
     train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=print_fr)
 

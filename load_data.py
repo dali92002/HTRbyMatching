@@ -9,8 +9,8 @@ from configs import getOptions
 import random
 
 options = getOptions().parse()
-cipher = 'borg'#options.cipher
-
+cipher = options.cipher
+alphabet = options.alphabet
 
 
 
@@ -155,18 +155,18 @@ class readQuerySupport(object):
         img_path = self.imgs[idx][0]
         
         
-        images_choices = os.listdir(self.root+cipher+'_symbs'+str(self.augment)+'/'+self.Xdata[img_path]['class']+'/') ###########
-
+        images_choices = os.listdir(alphabet+'/'+cipher+'/'+self.Xdata[img_path]['class']+'/') ###########
+        random.shuffle(images_choices)
 
         try:
             img1 = Image.open(self.Xdata[img_path]['filepath']).convert("RGB")
         except:
             img1 = Image.open(self.Xdata[img_path]['filepath'].split('.png')[0]+'.jpg').convert("RGB")
         try:
-            img2 = Image.open(self.root+cipher+'_symbs/'+self.Xdata[img_path]['class']+'/'+random.choice(images_choices).split('.png')[0]+'.jpg').convert("RGB")
+            img2 = Image.open(alphabet+'/'+cipher+'/'+self.Xdata[img_path]['class']+'/'+random.choice(images_choices).split('.png')[0]+'.jpg').convert("RGB")
         
         except:
-            img2 = Image.open(self.root+cipher+'_symbs/'+self.Xdata[img_path]['class']+'/'+random.choice(images_choices).split('.jpg')[0]+'.jpg').convert("RGB")
+            img2 = Image.open(alphabet+'/'+cipher+'/'+self.Xdata[img_path]['class']+'/'+random.choice(images_choices).split('.jpg')[0]+'.jpg').convert("RGB")
         
         
         the_class = (self.Xdata[img_path]['class'])
