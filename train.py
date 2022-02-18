@@ -158,7 +158,7 @@ for epoch in range(0, 100):
 
     if epoch >-1:
         
-        list_lines = os.listdir(val_lines_path+cipher)[:2]
+        list_lines = os.listdir(val_lines_path+cipher)[:30]
 
         results = draw_and_read(model,list_lines,val_lines_path,cipher,SHOTS)
         gt = get_gt()
