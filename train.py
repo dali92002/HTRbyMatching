@@ -153,7 +153,7 @@ dataset,data_loader = load_data(BATCH_SIZE,SHOTS,root, root_txt)
 
 print_fr = int(len(dataset)/BATCH_SIZE/4)
 
-### training here
+# training here
 for epoch in range(0, 100):
 
     if epoch >-1:

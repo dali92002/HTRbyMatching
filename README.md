@@ -61,7 +61,20 @@ Download the desired weights. These are following the training that was done in 
 
 ## Training 
 
-Coming soon ...
+### Prepare Your alphabet and Data:
+
+Check this instructions file to prepare your data for training:
+
+https://docs.google.com/document/d/1c9waNt2vNq_WJiRLBU81hqCcTEaPjQ0-I8xybyyJ8Uc/edit?usp=sharing
+
+### Trainig / Fine Tuning:
+
+Then, you canbtrain the model from scratch or fine tune it by taking the omniglot model weights from the table above.
+Here, I am training for the cipher named runic my training data path is ./few5/  my validation data path is ./data_validation , I am training with a batch_size of 5 and a threshold of 0.4 (it is recommended to keep it 0.4) and here I am doing a fine tuning over the model trained on omniglot so I specify train_type as "fine_tune". If you want to train from scratch specify the train_type as "scratch".
+
+```bash
+python train.py --cipher runic --data_path ./few5/ --val_data_path data_validation --batch_size 5 --shots 5 --alphabet alphabet --thresh 0.4 --train_type fine_tune
+```
 
 ## Testing
 
@@ -91,10 +104,14 @@ If you find this useful for your research, please cite it as follows:
 }
 ```
 ```bash
-@article{souibgui2021fewShots,
-  title={Few Shots Are All You Need: A Progressive Few Shot Learning Approach for Low Resource Handwriting Recognition},
+@article{souibgui2022fewShots,
+  title={Few Shots Are All You Need: A Progressive Few Shot Learning Approach for Low Resource Handwritten Text Recognition},
   author={Souibgui, Mohamed Ali and Forn{\'e}s, Alicia and Kessentini, Yousri and Megyesi, Be{\'a}ta},
-  journal={arXiv preprint arXiv:2107.10064},
-  year={2021}
-}
+  journal = {Pattern Recognition Letters},
+  volume = {160},
+  pages = {43-49},
+  year = {2022},
+  issn = {0167-8655},
+  doi = {https://doi.org/10.1016/j.patrec.2022.06.003}
+  }
 ```
