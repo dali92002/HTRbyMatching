@@ -1,5 +1,4 @@
 import torch
-from torch import nn
 import torchvision
 from src.faster_rcnn import FastRCNNPredictor ,TwoMLPHead
 import torchvision
@@ -7,34 +6,21 @@ from   src.faster_rcnn import FasterRCNN
 from src.rpn import AnchorGenerator
 import torchvision
 import src.transforms as T 
-import torch.nn.functional as F
-import matplotlib.pyplot as plt
-from src.engine import train_one_epoch, evaluate
-import src.utils
-import sys
-import csv
 import cv2 
 import os
 import random
 import numpy as np
-import PIL
 
 from configs import getOptions
 import htr_utils
 
 options = getOptions().parse()
-
 cipher = options.cipher
-
 alphabet_path = options.alphabet
-
 lines_path = options.lines
-
 output_path = options.output
-
 shots_number = options.shots
 threshold = options.thresh
-
 testing_model = options.testing_model
 
 
@@ -43,15 +29,12 @@ zid_read = htr_utils.zid_read
 inttosymbs = htr_utils.inttosymbs
 
 
-model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
 num_classes = 2
-
 backbone = torchvision.models.vgg16(pretrained=True).features
 backbone.out_channels = 512 #128
 
 anchor_generator = AnchorGenerator(sizes=((32, 64, 128, 256, 512),),
                                    aspect_ratios=((0.5, 1.0, 2.0),))
-
 roi_ouput_size = 7
 roi_pooler = torchvision.ops.MultiScaleRoIAlign(featmap_names=[0],
                                                 output_size=roi_ouput_size,
@@ -99,22 +82,14 @@ lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
 model.load_state_dict(torch.load(testing_model))
 
 
-# alphabet_fo = alphabet_path
-
-
 list_lines = os.listdir(lines_path+'/'+cipher)[:]
-
 results = draw_and_read(model,list_lines,lines_path,cipher,shots_number)
-
-
-#######################################""
 predictions, pred_boxes  = zid_read(results)
-
 pred_lines = inttosymbs(predictions,cipher)
 
 
 
-### visialize-results
+# visialize-results
 for ln,pl,bx in zip(list_lines,pred_lines,pred_boxes):
 
     if not os.path.exists(output_path+'/'+cipher+'/text'):
@@ -129,6 +104,15 @@ for ln,pl,bx in zip(list_lines,pred_lines,pred_boxes):
     f.close()
 
     im = cv2.imread(lines_path+'/'+cipher+'/'+ln)
+    
+    # new resizing method
+    im_height, im_width = im.shape[:2]
+    if options.resize:
+        # transform boxes to the original size
+        resize_factor = im_width/2048
+        for bx_i in range(len(bx)):
+            bx[bx_i] = int(bx[bx_i]*resize_factor) 
+
     masks = np.ones((im.shape[0],im.shape[1],3)) * 255
     masks  = masks.astype(np.uint8)
 
@@ -147,16 +131,15 @@ for ln,pl,bx in zip(list_lines,pred_lines,pred_boxes):
         c3 = random.randint(0,255)
 
         f.write((str(bx[b])+','+str(bx[b+1])+'\n'))
-        cv2.rectangle(masks, (bx[b],0), (bx[b+1], 105), (c1,c2,c3),-1)    
+        cv2.rectangle(masks, (bx[b],0), (bx[b+1], im_height), (c1,c2,c3),-1)    
         clas = pline[i]
         i+=1
         cv2.putText(text,clas,  (bx[b]+ int((bx[b+1]-bx[b])/3),40),  cv2.FONT_HERSHEY_SIMPLEX, 0.7,(c1,c2,c3), 2)
    
 
     res = cv2.addWeighted(im,0.8,masks,0.2,0)
-
-
     vis_concatenate = np.concatenate((res, text), axis=0)
-
     cv2.imwrite(output_path + '/'+cipher+'/images/'+ln,vis_concatenate)
-    
+
+
+exit(0)

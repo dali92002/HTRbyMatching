@@ -8,10 +8,11 @@ from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 import editdistance
 import random
 
+
 options = getOptions().parse()
 
 alphabet_path = options.alphabet
-
+resizing = options.resize
 
 threshold = options.thresh
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -46,11 +47,14 @@ def get_error_rate(gt,pred):
 
 def drawprobs(model, cipher, img1,shots,st_ch,en_ch):
     mat_size  = 100
+    img2_size = 105
+    if resizing:
+        img2_size = 128
     
     image_hline = Image.new('RGB', (img1.size()[2]+5+mat_size, 5), (0, 0, 255))
     image1 = Image.fromarray(img1.mul(255).permute(1, 2, 0).byte().numpy())
-    image_f = Image.new('RGB', (mat_size, 105), (255, 255, 255))
-    image_vline = Image.new('RGB', (5, 105), (0, 0, 255))
+    image_f = Image.new('RGB', (mat_size, img2_size), (255, 255, 255))
+    image_vline = Image.new('RGB', (5, img2_size), (0, 0, 255))
     imgs_comb = np.hstack( (image_f,image_vline,image1) )
 
     thresh = threshold
@@ -67,40 +71,36 @@ def drawprobs(model, cipher, img1,shots,st_ch,en_ch):
         random.shuffle(i_symbs)
         i_symbs = i_symbs[:shots] 
 
-        # random.shuffle(choices)  ##################################################################################################
         for symb in i_symbs:
 
             try:
                 img2 = Image.open(alphabet_path+'/'+cipher+'/'+cipher+'/'+symbol+'/'+symb.split('.png')[0]+'.jpg').convert("RGB")
-                img2 = Fsupp.to_tensor(img2)
             except:
                 img2 = Image.open(alphabet_path+'/'+cipher+'/'+symbol+'/'+symb.split('.jpg')[0]+'.jpg').convert("RGB")
-                img2 = Fsupp.to_tensor(img2)
-            # choices.pop(0)
+            if resizing:
+                img2 = img2.resize((img2_size,img2_size))
+            img2 = Fsupp.to_tensor(img2)
+
             with torch.no_grad():
-                _ = model([img1.to(device)],[img2.to(device)])
-            _ = _[0]
+                preds = model([img1.to(device)],[img2.to(device)])
+            preds = preds[0]
             
             
         
-            for  box,lab in zip (_['boxes'],range(_['scores'].size()[0])):
-                if (_['scores'][lab].item()>thresh):
-                    Mat = torch.zeros((3,mat_size,int(box[2].item())-int(box[0].item()))) + _['scores'][lab].item()
+            for  box,lab in zip (preds['boxes'],range(preds['scores'].size()[0])):
+                if (preds['scores'][lab].item()>thresh):
+                    Mat = torch.zeros((3,mat_size,int(box[2].item())-int(box[0].item()))) + preds['scores'][lab].item()
                     Matrix[:,:,int(box[0].item()):int(box[2].item()) ] = torch.max(Mat,Matrix[:,:,int(box[0].item()):int(box[2].item()) ]) 
 
-                    Pmat = np.zeros((1,int(box[2].item())-int(box[0].item()))) + _['scores'][lab].item() 
+                    Pmat = np.zeros((1,int(box[2].item())-int(box[0].item()))) + preds['scores'][lab].item() 
                     Pro_matrix[p_c,int(box[0].item()):int(box[2].item())] = np.maximum(Pmat,Pro_matrix[p_c,int(box[0].item()):int(box[2].item())])
         p_c = p_c+1
 
 
         Matrix_draw = Image.fromarray(Matrix.mul(255/1).permute(1, 2, 0).byte().numpy())
-        
-        
         draw = ImageDraw.Draw(Matrix_draw,mode='RGB')
         
-        
         pa = 30
-
         for d in range(0,img1.size()[2],pa):
             
             if (torch.max(Matrix[:,:,d:d+pa])!=last_max) and torch.max(Matrix[:,:,d:d+pa])>0:
@@ -123,12 +123,11 @@ def drawprobs(model, cipher, img1,shots,st_ch,en_ch):
 
 
 
-# ####################### read the spaces
-
-
+# read the spaces
 def read_sp_char(matrix,thr,conf = 0.3):
     maxs = matrix.max(axis=0)
     listchar = []
+    list_boxes=[]
     occ = 0
     lastone=0
     last_max = 0
@@ -149,20 +148,15 @@ def read_sp_char(matrix,thr,conf = 0.3):
                 last_max = 0
         if (np.where(matrix[:,z] == maxs[z])[0].shape[0]==1):
             a = (np.where(matrix[:,z] == maxs[z])[0][0])
-#             print(a)
             if a!=lastone or last_max!= maxs[z]:
                 if occ > thr:
-                    #here the shit  .........................................................
                     if last_max >= conf:
-#                         print(maxs[z-15])
                         listchar.append(lastone)
                     else:
-#                         print(maxs[z-15])
                         listchar.append(-2)
                 occ = 0
                 lastone = a
                 last_max = maxs[z]
-#                 print(last_max)
             else:
                 occ = occ +1
     if occ > thr:
@@ -176,8 +170,7 @@ def read_sp_char(matrix,thr,conf = 0.3):
 
 
 
-###################### dont read the spaces
-
+# dont read the spaces
 def read_char(matrix,thr,conf = 0.3):
     maxs = matrix.max(axis=0)
     
@@ -249,16 +242,12 @@ def draw_and_read(model,list_lines,lines_path,cipher,shots_number):
     stop=0
     i=0
     for t in  tqdm (list_lines[:]):
-        
-        # sys.stdout.write('\r'+'Counting CER ...:' + str(i))
-        # i += 1
         img1 = Image.open(lines_path+'/'+cipher+'/'+t).convert("RGB")
+        if resizing:
+            img1 = img1.resize((2048,128))
         img1 = Fsupp.to_tensor(img1)
 
-        probs, matrix = drawprobs(model,cipher,img1,shots_number,1,len(os.listdir(alphabet_path+'/'+cipher)))
-        # if not os.path.exists ('eval_'+cipher+'/matrices/'):
-        #     os.makedirs('eval_'+cipher+'/matrices/')
-        # probs.save('eval_'+cipher+'/matrices/'+t)
+        _, matrix = drawprobs(model,cipher,img1,shots_number,1,len(os.listdir(alphabet_path+'/'+cipher)))
         matrices.append(matrix)
     return(matrices)
 
@@ -300,4 +289,3 @@ def inttosymbs(preds,cipher):
                     p_line += alphabet_symbs[pr[i]] + ' '
         pred_lines.append(p_line[:-1])
     return pred_lines
-

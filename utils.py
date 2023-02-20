@@ -198,6 +198,7 @@ class MetricLogger(object):
             'max mem: {memory:.0f}'
         ])
         MB = 1024.0 * 1024.0
+
         for obj in iterable:
             data_time.update(time.time() - end)
             yield obj

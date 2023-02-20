@@ -1,56 +1,39 @@
 import torch
-from torch import nn
 import torchvision
 from src.faster_rcnn import FastRCNNPredictor ,TwoMLPHead
 import torchvision
 from   src.faster_rcnn import FasterRCNN
 from src.rpn import AnchorGenerator
 import torchvision
-import src.transforms as T 
-import torch.nn.functional as F
-import matplotlib.pyplot as plt
-from src.engine import train_one_epoch, evaluate
-import src.utils
-import sys
-import csv
-import cv2 
+from src.engine import train_one_epoch
 import os
-import random
-import numpy as np
-import PIL
 from load_data import load_data
 from configs import getOptions
 import htr_utils
 
 
 
+
 options = getOptions().parse()
-
 cipher = options.cipher
-
 alphabet_path = options.alphabet
-
 lines_path = options.lines
-
 output_path = options.output
-
 shots_number = options.shots
 threshold = options.thresh
-
 testing_model = options.testing_model
 
-  
 draw_and_read = htr_utils.draw_and_read
 zid_read = htr_utils.zid_read
 inttosymbs = htr_utils.inttosymbs
 get_error_rate = htr_utils.get_error_rate
-BATCH_SIZE = options.batch_size
+batch_size = options.batch_size
 
-SHOTS = options.shots
-TRAIN_TYPE = options.train_type
+shots = options.shots
+train_type = options.train_type
 root =  options.data_path
 val_data_path = options.val_data_path
-root_txt = options.data_path+'annotation/train.txt'
+root_txt = options.data_path+'annotation/'+'runic'+'.txt'
 
 
 shots_path = cipher+'_symbs'
@@ -58,14 +41,13 @@ shots_path = cipher+'_symbs'
 val_lines_path = val_data_path+'/lines/'
 val_text_path  = val_data_path+'/gt/'
 
-
  
 
 model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
 num_classes = 2
 
 backbone = torchvision.models.vgg16(pretrained=True).features
-backbone.out_channels = 512 #128
+backbone.out_channels = 512 
 
 anchor_generator = AnchorGenerator(sizes=((32, 64, 128, 256, 512),),
                                    aspect_ratios=((0.5, 1.0, 2.0),))
@@ -122,19 +104,11 @@ def txt_to_int(text):
     text= text.split('\n')[0]
     text = text.split(' ')
     for c in text:
-        if c not in alpha_f: #### borg
-            res.append(-3)   #### if you want to ignore out of vocab symbols make it continue
+        if c not in alpha_f: 
+            res.append(-3)   # if you want to ignore out of vocab symbols make it continue
+        elif c == 'space':
+            res.append(-2)
         else:
-            # a=41
-            # if c==':':
-            #     c='cl'
-            # if c=='.':
-            #     c='dt'
-            # if c==',':
-            #     c='cm'
-            # # if c == ' ':   
-            # #     res.append(-1)
-            # else:
             res.append(alpha_f.index(c))
     return (res)
 
@@ -142,28 +116,28 @@ def txt_to_int(text):
 
 
 
-if TRAIN_TYPE == 'fine_tune':
+if train_type == 'fine_tune':
     model.load_state_dict(torch.load('weights/omniglot.pth'))
 
     print("model loaded")
 
 best_cer = 1
-dataset,data_loader = load_data(BATCH_SIZE,SHOTS,root, root_txt)
+dataset,data_loader = load_data(batch_size,shots,root, root_txt)
 
 
-print_fr = int(len(dataset)/BATCH_SIZE/4)
+print_fr = int(len(dataset)/batch_size/4)
 
 # training here
-for epoch in range(0, 100):
+for epoch in range(0, 45):
 
     if epoch >-1:
         
-        list_lines = os.listdir(val_lines_path+cipher)[:30]
+        list_lines = os.listdir(val_lines_path+cipher)[:2]
 
-        results = draw_and_read(model,list_lines,val_lines_path,cipher,SHOTS)
+        results = draw_and_read(model,list_lines,val_lines_path,cipher,shots)
         gt = get_gt()
 
-        predictions  = zid_read(results)[0]
+        predictions  = zid_read(results, read_space=False)[0]
 
         cer = get_error_rate(gt,predictions)[0]
 
@@ -178,6 +152,3 @@ for epoch in range(0, 100):
         print('best Validation CER:', best_cer,'\n')
 
     train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=print_fr)
-
-
-a=414

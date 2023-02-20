@@ -4,14 +4,17 @@ import torch
 import sys
 import cv2 
 import transforms as T 
+import torchvision.transforms as torchT
+import torchvision.transforms.functional as TF
+
 import utils
 from configs import getOptions
 import random
 
 options = getOptions().parse()
-cipher = options.cipher
+cipher = options.cipher #"synthetic"#
 alphabet = options.alphabet
-
+resizing =  options.resize
 
 
 def get_data2(input_path,labeling=False):
@@ -35,10 +38,9 @@ def get_data2(input_path,labeling=False):
                 else:
                     pseudo=True
             
-            # if 'line' in filename:
+            # if i == 100:
             #     return all_imgs
-
-
+            
             if filename+"class"+class_name not in all_imgs:
                 all_imgs[filename+"class"+class_name] = {}
                 try:
@@ -67,71 +69,6 @@ def get_data2(input_path,labeling=False):
         return all_imgs
 
 
-# labels_path = 'posandtrue'
-# neg_path = 'neg'
-
-# except_neg_path = 'neg'
-# #############################################################################################
-# def readposneg():
-#     L= {}
-#     for key0 in os.listdir('few5/annotation/progressive/'+labels_path):
-#         k=key0.split('.txt')[0]
-
-#         L[k]={}
-
-        
-#         filename = "few5/"+cipher+"_lines/"+k.split('class')[0]
-#         img = cv2.imread(filename)
-#         (rows,cols) = img.shape[:2]
-
-
-#         L[k]['filepath'] = filename
-#         L[k]['class'] = k.split('class')[1]            
-#         L[k]['width'] = cols
-#         L[k]['height'] = rows
-#         L[k]['bboxes'] = []
-        
-#         with open('few5/annotation/progressive/'+labels_path+'/'+key0) as f:
-#             lines = f.readlines()
-#         for line in lines:
-            
-#             x1 = line.split(',')[1]
-#             y1 = line.split(',')[2]
-#             x2 = line.split(',')[3]
-#             y2 = line.split(',')[4]
-#             pseudo = 'yes' in line.split(',')[7]
-
-#             L[k]['bboxes'].append({'class': 1,'x1': int(x1), 'x2': int(x2), 'y1': int(y1), 'y2': int(y2), 'score': 1,'pseudo':pseudo})
-        
-        
-#         try:
-#             with open('few5/annotation/progressive/'+neg_path+'/'+key0) as f:
-#                 lines = f.readlines()
-#         except:
-#             with open('few5/annotation/progressive/'+except_neg_path+'/'+key0) as f:
-#                 lines = f.readlines()
-#         for line in lines:
-            
-#             x1 = line.split(',')[1]
-#             y1 = line.split(',')[2]
-#             x2 = line.split(',')[3]
-#             y2 = line.split(',')[4]
-
-#             L[k]['bboxes'].append({'class': 0,'x1': int(x1), 'x2': int(x2), 'y1': int(y1), 'y2': int(y2), 'score': 1,'pseudo':pseudo})
-
-#     return L
-
-# #############################################################################################
-
-    
-
-
-
-
-
-
-
-
 
 class readQuerySupport(object):
     def __init__(self, root,Xdata, augment, transforms):
@@ -145,12 +82,7 @@ class readQuerySupport(object):
         for i in range (len(self.listimg)):
             for c in range (augment):
                 self.imgs.append([self.listimg[i],c])
-        
-#         self.masks = list(sorted(os.listdir(os.path.join(root, "PedMasks"))))
-        
     def __getitem__(self, idx):
-        # load images ad masks
-#         img_path = os.path.join(self.root, "train", self.imgs[idx])
 
         img_path = self.imgs[idx][0]
         
@@ -168,22 +100,28 @@ class readQuerySupport(object):
         except:
             img2 = Image.open(alphabet+'/'+cipher+'/'+self.Xdata[img_path]['class']+'/'+random.choice(images_choices).split('.jpg')[0]+'.jpg').convert("RGB")
         
+        image_size = img1.size
         
-        the_class = (self.Xdata[img_path]['class'])
-        
+        if resizing:
+            resize_factors = [2048/image_size[0], 128/image_size[1]]
+            image_size = [2048,128]
+        else:
+            resize_factors = [1,1]
         num_objs = len(self.Xdata[img_path]['bboxes'])
         boxes = []
         labels = []
         for j in range(num_objs):
-            # if (self.Xdata[img_path]['bboxes'][j]['class'])==1:
-            
-            xmin = self.Xdata[img_path]['bboxes'][j]['x1']
-            xmax = self.Xdata[img_path]['bboxes'][j]['x2']
-            ymin = self.Xdata[img_path]['bboxes'][j]['y1']
-            ymax = self.Xdata[img_path]['bboxes'][j]['y2']
+            xmin = int(self.Xdata[img_path]['bboxes'][j]['x1'] * resize_factors[0])
+            xmax = int(self.Xdata[img_path]['bboxes'][j]['x2'] * resize_factors[0])
+            ymin = int(self.Xdata[img_path]['bboxes'][j]['y1'] * resize_factors[1])
+            ymax = int(self.Xdata[img_path]['bboxes'][j]['y2'] * resize_factors[1])
             boxes.append([xmin, ymin, xmax, ymax])
-            labels.append(self.Xdata[img_path]['bboxes'][j]['class'])#int(X[img_path]['bboxes'][j]['class']))
-        # convert everything into a torch.Tensor
+            labels.append(self.Xdata[img_path]['bboxes'][j]['class'])
+
+        if resizing:
+            img1 = img1.resize((2048,128))
+            img2 = img2.resize((128,128))
+
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
         # there is only one class
         labels = torch.as_tensor(labels, dtype=torch.int64)
@@ -203,44 +141,35 @@ class readQuerySupport(object):
         target["area"] = area
         target["iscrowd"] = iscrowd
         
-        
-        
-        bbox2 = []
-        bbox2.append([0,0,224,224])
-        bbox2 = torch.as_tensor(bbox2, dtype=torch.float32)
-        area2 = (bbox2[:, 3] - bbox2[:, 1]) * (bbox2[:, 2] - bbox2[:, 0])
-        # suppose all instances are not crowd
-        iscrowd2 = torch.zeros((1,), dtype=torch.int64)
-        
-        
-        target2 = {}
-        target2["boxes"] = bbox2
-        target2["labels"] = torch.as_tensor([1], dtype=torch.int64)
-        target2["image_id"] = image_id
-        target2["area"] = area2
-        target2["iscrowd"] = iscrowd
-
         if self.transforms is not None:
+            # transform image 1
             img1,target = self.transforms(img1,target)
-            img2 = self.transforms(img2,target2)#Fsupp.to_tensor(img2)#
+            i, j, h, w  = torchT.RandomCrop.get_params(img1, output_size=(image_size[1]-8,image_size[0]))
+            img1 = TF.crop(img1, i, j, h, w)
+            img1 = torchT.Resize((image_size[1],image_size[0]))(img1)
 
-        
-        return img1, img2[0], target 
+            # transform image 2
+            img2,_ = self.transforms(img2,None)#Fsupp.to_tensor(img2)#
+            i, j, h, w = torchT.RandomCrop.get_params(img2, output_size=(image_size[1]-8,image_size[1]-8))
+            img2 = TF.crop(img2, i, j, h, w)
+            img2 = torchT.Resize((image_size[1],image_size[1]))(img2)
+            img2 = torchT.RandomRotation(degrees=(-10, 10))(1-img2)
+            img2 = 1-img2      
+
+        return img1, img2, target 
 
     def __len__(self):
         return len(self.imgs)
 
-
 def get_transform(train):
     transforms = []
     transforms.append(T.ToTensor())
-    if train:
-        transforms.append(T.RandomHorizontalFlip(0.5))
+    
     return T.Compose(transforms)
 
-
-def load_data(batch_s,shots_number,root,txtfile):
-    L = get_data2(txtfile,False)
+def load_data(batch_s,shots_number,root,txtfile=None, L=None):
+    if txtfile:
+        L = get_data2(txtfile,False)
 
     dataset_lab = readQuerySupport(root,L, shots_number,get_transform(train=False))
     data_loader = torch.utils.data.DataLoader(dataset_lab, batch_size=batch_s, shuffle=True, num_workers=4, collate_fn=utils.collate_fn)
