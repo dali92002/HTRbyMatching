@@ -63,13 +63,13 @@ Download the desired weights. These are following the training that was done in 
 
 ### Prepare Your alphabet and Data:
 
-Check this instructions file to prepare your data for training:
+Check these instructions file to prepare your data for training:
 
 https://docs.google.com/document/d/1c9waNt2vNq_WJiRLBU81hqCcTEaPjQ0-I8xybyyJ8Uc/edit?usp=sharing
 
-### Trainig / Fine Tuning:
+### Training / Fine Tuning:
 
-Then, you canbtrain the model from scratch or fine tune it by taking the omniglot model weights from the table above.
+Then, you can train the model from scratch or fine tune it by taking the omniglot model weights from the table above.
 Here, I am training for the cipher named runic my training data path is ./few5/  my validation data path is ./data_validation , I am training with a batch_size of 5 and a threshold of 0.4 (it is recommended to keep it 0.4) and here I am doing a fine tuning over the model trained on omniglot so I specify train_type as "fine_tune". If you want to train from scratch specify the train_type as "scratch".
 
 ```bash
