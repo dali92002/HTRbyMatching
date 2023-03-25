@@ -16,7 +16,7 @@ cd HTRbyMatching
 ```
 ## Requirements
 
-Create your evironment, with the file htrmatching.yml, then activate it. 
+Create your environment, with the file htrmatching.yml, then activate it. 
 ```bash
 conda env create -f htrmatching.yml
 conda activate fewdet
